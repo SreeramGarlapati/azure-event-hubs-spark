@@ -403,7 +403,9 @@ private[spark] class EventHubsSource(
 
   override def stop(): Unit = {}
 
-  override def uid: String = s"${eventHubsNamespace}_${eventHubsName}_$streamId"
+  override def uid: String = {
+    s"${eventHubsNamespace}_${eventHubsName}_$streamId".replaceAll("[^A-Za-z0-9]", "")
+  }
 
   // the list of eventhubs partitions connecting with this connector
   override def connectedInstances: List[EventHubNameAndPartition] = ehNameAndPartitions

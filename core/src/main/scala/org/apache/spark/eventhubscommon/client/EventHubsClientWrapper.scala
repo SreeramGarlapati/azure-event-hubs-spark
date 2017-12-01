@@ -48,12 +48,6 @@ private[spark] class EventHubsClientWrapper(
   private val ehPolicyName = ehParams("eventhubs.policyname").toString
   private val ehPolicy = ehParams("eventhubs.policykey").toString
 
-  private val connectionString = Try {
-    new ConnectionStringBuilder(ehNamespace, ehName, ehPolicyName, ehPolicy).toString
-  } getOrElse Try {
-    new ConnectionStringBuilder(new URI(ehNamespace), ehName, ehPolicyName, ehPolicy).toString
-  }.get
-
   private val consumerGroup = ehParams
     .getOrElse("eventhubs.consumergroup", EventHubClient.DEFAULT_CONSUMER_GROUP_NAME)
     .toString
@@ -89,8 +83,17 @@ private[spark] class EventHubsClientWrapper(
    *
    * the major purpose of this API is for creating AMQP management client
    */
-  def createClient(eventhubsParams: Map[String, String]): EventHubClient =
-    EventHubClient.createFromConnectionStringSync(connectionString.toString)
+  def createClient(eventhubsParams: Map[String, String]): EventHubClient = {
+    Try {
+      val connectionString =
+        new ConnectionStringBuilder(ehNamespace, ehName, ehPolicyName, ehPolicy)
+      EventHubClient.createFromConnectionStringSync(connectionString.toString)
+    } getOrElse {
+      val connectionString =
+        new ConnectionStringBuilder(new URI(ehNamespace), ehName, ehPolicyName, ehPolicy)
+      EventHubClient.createFromConnectionStringSync(connectionString.toString)
+    }
+  }
 
   def createReceiver(partitionId: String,
                      startOffset: String,
@@ -114,7 +117,7 @@ private[spark] class EventHubsClientWrapper(
   private[spark] def createReceiverInternal(partitionId: String,
                                             offsetType: EventHubsOffsetType,
                                             currentOffset: String): Unit = {
-    eventhubsClient = EventHubClient.createFromConnectionStringSync(connectionString)
+    createClient(ehParams)
 
     eventhubsReceiver = offsetType match {
       case EventHubsOffsetTypes.None | EventHubsOffsetTypes.PreviousCheckpoint |
