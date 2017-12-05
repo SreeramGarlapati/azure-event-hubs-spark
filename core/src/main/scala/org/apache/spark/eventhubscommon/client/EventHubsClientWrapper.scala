@@ -117,7 +117,15 @@ private[spark] class EventHubsClientWrapper(
   private[spark] def createReceiverInternal(partitionId: String,
                                             offsetType: EventHubsOffsetType,
                                             currentOffset: String): Unit = {
-    createClient(ehParams)
+    eventhubsClient = Try {
+      val connectionString =
+        new ConnectionStringBuilder(ehNamespace, ehName, ehPolicyName, ehPolicy)
+      EventHubClient.createFromConnectionStringSync(connectionString.toString)
+    } getOrElse {
+      val connectionString =
+        new ConnectionStringBuilder(new URI(ehNamespace), ehName, ehPolicyName, ehPolicy)
+      EventHubClient.createFromConnectionStringSync(connectionString.toString)
+    }
 
     eventhubsReceiver = offsetType match {
       case EventHubsOffsetTypes.None | EventHubsOffsetTypes.PreviousCheckpoint |
