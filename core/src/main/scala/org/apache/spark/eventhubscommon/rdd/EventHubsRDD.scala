@@ -177,7 +177,7 @@ private[spark] class EventHubsRDD(sc: SparkContext,
     val ehRDDPartition = split.asInstanceOf[EventHubRDDPartition]
     val progressWriter = new ProgressWriter(
       offsetParams.streamId,
-      offsetParams.uid,
+      offsetParams.uid.replaceAll("[^A-Za-z0-9]", ""),
       ehRDDPartition.eventHubNameAndPartitionID,
       batchTime,
       new Configuration(),
