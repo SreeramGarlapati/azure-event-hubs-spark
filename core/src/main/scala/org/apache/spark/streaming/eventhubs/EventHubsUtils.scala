@@ -49,7 +49,11 @@ object EventHubsUtils {
       eventHubNamespace: String,
       progressDir: String,
       eventParams: Predef.Map[String, Predef.Map[String, String]]): EventHubDirectDStream = {
-    val newStream = new EventHubDirectDStream(ssc, eventHubNamespace, progressDir, eventParams)
+
+    val newStream = new EventHubDirectDStream(ssc,
+                                              eventHubNamespace.replaceAll("[^A-Za-z0-9]", ""),
+                                              progressDir,
+                                              eventParams)
     newStream
   }
 
@@ -71,7 +75,7 @@ object EventHubsUtils {
       eventHubsClientCreator: (String, Predef.Map[String, Predef.Map[String, String]]) => Client)
     : EventHubDirectDStream = {
     val newStream = new EventHubDirectDStream(ssc,
-                                              eventHubNamespace,
+                                              eventHubNamespace.replaceAll("[^A-Za-z0-9]", ""),
                                               progressDir,
                                               eventParams,
                                               eventHubsReceiverCreator,
