@@ -130,7 +130,7 @@ private[eventhubs] class EventHubDirectDStream private[eventhubs] (
       concurrentJobs == 1,
       "due to the limitation from eventhub, we do not allow to have multiple concurrent spark jobs")
     DirectDStreamProgressTracker.initInstance(progressDir,
-                                              context.sparkContext.appName,
+                                              eventHubNameSpace,
                                               context.sparkContext.hadoopConfiguration)
     ProgressTrackingListener.initInstance(ssc, progressDir)
   }
@@ -415,7 +415,7 @@ private[eventhubs] class EventHubDirectDStream private[eventhubs] (
       logInfo("initialized ProgressTracker")
       val appName = context.sparkContext.appName
       DirectDStreamProgressTracker.initInstance(progressDir,
-                                                appName,
+                                                eventHubNameSpace,
                                                 context.sparkContext.hadoopConfiguration)
       batchForTime.toSeq.sortBy(_._1)(Time.ordering).foreach {
         case (t, b) =>
