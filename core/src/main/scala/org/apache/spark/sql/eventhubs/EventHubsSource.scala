@@ -56,8 +56,12 @@ private[spark] class EventHubsSource private[eventhubs] (sqlContext: SQLContext,
 
   private val sc = sqlContext.sparkContext
 
-  private val maxOffsetsPerTrigger =
-    options.get(MaxEventsPerTriggerKey).map(_.toSequenceNumber)
+  private val maxOffsetsPerTrigger: Option[Int] =
+    Some(
+      options
+        .get(MaxEventsPerTriggerKey)
+        .map(_.toInt)
+        .getOrElse(DefaultEvents * partitionCount))
 
   private var _client: Client = _
   private[spark] def ehClient = {
@@ -168,7 +172,7 @@ private[spark] class EventHubsSource private[eventhubs] (sqlContext: SQLContext,
 
   /** Proportionally distribute limit number of offsets among topicpartitions */
   private def rateLimit(
-      limit: SequenceNumber,
+      limit: Int,
       from: Map[NameAndPartition, SequenceNumber],
       until: Map[NameAndPartition, SequenceNumber]): Map[NameAndPartition, SequenceNumber] = {
     val fromNew = fetchEarliestSeqNos(until.keySet.diff(from.keySet).toSeq)
