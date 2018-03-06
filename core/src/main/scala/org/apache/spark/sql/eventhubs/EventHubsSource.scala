@@ -23,21 +23,18 @@ import java.nio.charset.StandardCharsets
 import org.apache.commons.io.IOUtils
 import org.apache.spark.SparkContext
 import org.apache.spark.eventhubs.client.Client
-import org.apache.spark.eventhubs.rdd.{ EventHubsRDD, OffsetRange }
-import org.apache.spark.eventhubs.{ EventHubsConf, NameAndPartition, _ }
+import org.apache.spark.eventhubs.rdd.{EventHubsRDD, OffsetRange}
+import org.apache.spark.eventhubs.{EventHubsConf, NameAndPartition, _}
 import org.apache.spark.internal.Logging
 import org.apache.spark.scheduler.ExecutorCacheTaskLocation
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.util.DateTimeUtils
-import org.apache.spark.sql.execution.streaming.{
-  HDFSMetadataLog,
-  Offset,
-  SerializedOffset,
-  Source
-}
+import org.apache.spark.sql.execution.streaming.{HDFSMetadataLog, Offset, SerializedOffset, Source}
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{ DataFrame, SQLContext }
+import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.unsafe.types.UTF8String
+
+import scala.collection.mutable
 
 private[spark] class EventHubsSource private[eventhubs] (sqlContext: SQLContext,
                                                          options: Map[String, String],
@@ -295,12 +292,14 @@ private[spark] class EventHubsSource private[eventhubs] (sqlContext: SQLContext,
     val rdd = new EventHubsRDD(sc, ehConf, offsetRanges, clientFactory).map { ed =>
       InternalRow(
         ed.getBytes,
-        ed.getSystemProperties.getOffset.toLong,
+        ed.getSystemProperties.getOffset,
         ed.getSystemProperties.getSequenceNumber,
         DateTimeUtils.fromJavaTimestamp(
           new java.sql.Timestamp(ed.getSystemProperties.getEnqueuedTime.toEpochMilli)),
         UTF8String.fromString(ed.getSystemProperties.getPublisher),
-        UTF8String.fromString(ed.getSystemProperties.getPartitionKey)
+        UTF8String.fromString(ed.getSystemProperties.getPartitionKey),
+        ed.getSystemProperties,
+        ed.getProperties
       )
     }
 

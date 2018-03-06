@@ -151,11 +151,13 @@ private[sql] object EventHubsSourceProvider extends Serializable {
     StructType(
       Seq(
         StructField("body", BinaryType),
-        StructField("offset", LongType),
+        StructField("offset", StringType),
         StructField("sequenceNumber", LongType),
         StructField("enqueuedTime", TimestampType),
         StructField("publisher", StringType),
-        StructField("partitionKey", StringType)
+        StructField("partitionKey", StringType),
+        StructField("systemProperties", MapType(StringType, AnyDataType())),
+        StructField("properties", MapType(StringType, AnyDataType()))
       ))
   }
 }
